@@ -2,263 +2,279 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Executor GG | Full Architecture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Executor</title>
   <style>
-    :root {
-      --neon-bloom: 0 0 8px #ffffff, 0 0 20px #ffffff, 0 0 40px #ffffff;
-      --glass-bg: rgba(10, 10, 10, 0.7);
-      --glass-border: 1.5px solid rgba(255, 255, 255, 0.18);
+    /* Super Black & Smooth Rendering */
+    html, body {
+      margin: 0; padding: 0; width: 100vw; height: 100vh;
+      background-color: #000000; color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      overflow: hidden; touch-action: none;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body { background: #000; color: #fff; font-family: system-ui, sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
-
-    /* 4K Canvas */
-    #render-canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-
-    /* Top Bar */
-    #top-bar {
-      position: absolute; top: 0; left: 0; width: 100%; height: clamp(65px, 7vh, 100px);
-      background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border-bottom: var(--glass-border); display: flex; justify-content: space-between; align-items: center;
-      padding: 0 clamp(16px, 2vw, 36px); z-index: 100; transform: translateZ(0);
-    }
-    .brand {
-      font-family: serif; font-weight: 700; font-style: italic; font-size: clamp(1.4rem, 2vw, 2.4rem);
-      letter-spacing: 2px; text-shadow: var(--neon-bloom);
-    }
-    .engine-switcher select, .settings-grid select {
-      background: #111; color: #fff; border: var(--glass-border); padding: clamp(6px, 0.8vh, 12px) clamp(10px, 1vw, 16px);
-      border-radius: 6px; font-size: clamp(0.9rem, 1vw, 1.3rem); cursor: pointer; outline: none;
-    }
-    .quick-actions .action-btn {
-      background: rgba(255, 255, 255, 0.1); border: var(--glass-border); color: #fff;
-      padding: clamp(8px, 1vh, 14px) clamp(14px, 1.4vw, 24px); border-radius: 6px; cursor: pointer; margin: 0 4px;
-      font-size: clamp(0.85rem, 0.95vw, 1.25rem); font-weight: bold; transition: 0.2s;
-    }
-    .action-btn:hover { background: rgba(255, 255, 255, 0.25); }
-    .action-btn.danger { color: #ff5555; border-color: rgba(255, 85, 85, 0.4); }
-    .action-btn.danger:hover { background: rgba(255, 85, 85, 0.25); text-shadow: 0 0 12px #ff5555; color: #fff; }
-
-    #telemetry-hud { font-family: monospace; font-size: clamp(0.9rem, 1vw, 1.3rem); color: #bbb; }
-
-    /* Floating Window */
-    .floating-window {
-      position: absolute; top: clamp(80px, 9vh, 120px); left: clamp(20px, 2vw, 40px);
-      width: clamp(480px, 45vw, 1100px); height: clamp(380px, 50vh, 850px);
-      background: var(--glass-bg); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-      border: var(--glass-border); border-radius: 14px; display: flex; flex-direction: column; z-index: 999;
-      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.85); transition: width 0.2s ease, height 0.2s ease, transform 0.1s ease;
-    }
-    .window-header {
-      display: flex; justify-content: space-between; align-items: center; padding: clamp(10px, 1.2vh, 18px) clamp(14px, 1.5vw, 24px);
-      background: rgba(255, 255, 255, 0.05); border-bottom: var(--glass-border); cursor: grab;
-    }
-    .window-title { font-size: clamp(0.95rem, 1.1vw, 1.4rem); font-weight: 600; }
-    .window-controls button { background: none; border: none; color: #fff; cursor: pointer; font-family: monospace; font-size: clamp(1rem, 1.2vw, 1.5rem); padding: 0 8px; }
-    .window-content { flex: 1; display: flex; flex-direction: column; padding: clamp(12px, 1.5vh, 20px); gap: 12px; }
     
-    .settings-grid { display: flex; flex-direction: column; gap: 10px; font-size: clamp(0.85rem, 0.95vw, 1.2rem); color: #ddd; }
-    .settings-grid label { display: flex; justify-content: space-between; align-items: center; }
-    .settings-grid input[type="range"] { width: clamp(120px, 12vw, 220px); cursor: pointer; }
-
-    #code-editor {
-      flex: 1; background: rgba(0, 0, 0, 0.6); color: #00ffcc; border: var(--glass-border); padding: clamp(12px, 1.5vh, 20px);
-      font-family: monospace; font-size: clamp(14px, 1.1vw, 22px); line-height: 1.5; resize: none; outline: none; border-radius: 8px;
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent; 
     }
-    .floating-window.minimized { height: clamp(48px, 6vh, 65px) !important; overflow: hidden; }
-    .floating-window.maximized { top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; border-radius: 0; }
 
-    /* Virtual Joystick */
-    #virtual-joystick-container {
-      position: absolute; bottom: clamp(30px, 4vh, 60px); left: clamp(30px, 3vw, 60px);
-      width: clamp(140px, 14vw, 260px); height: clamp(140px, 14vw, 260px); z-index: 50; opacity: 0.7; transition: opacity 0.2s; touch-action: none;
+    /* Canvas Layer (Bottom) */
+    #render-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+      pointer-events: auto;
     }
-    #joystick-base { width: 100%; height: 100%; border: 2.5px solid rgba(255,255,255,0.35); border-radius: 50%; position: relative; }
+
+    /* Joystick Layer */
+    #joystick-container {
+      position: absolute; bottom: 30px; left: 30px;
+      width: 120px; height: 120px; z-index: 20;
+      opacity: 0.5; transition: opacity 0.2s; touch-action: none;
+    }
+    #joystick-base {
+      width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 50%; position: relative;
+    }
     #joystick-stick {
-      width: 35%; height: 35%; background: #fff; border-radius: 50%; position: absolute;
-      top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: var(--neon-bloom); pointer-events: none;
+      width: 40%; height: 40%; background: #ffffff; border-radius: 50%; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
     }
+
+    /* Tiny Floating Button (Always Clickable) */
+    #menu-toggle {
+      position: absolute; top: 20px; left: 20px;
+      width: 48px; height: 48px;
+      background: rgba(30, 30, 30, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 10px; z-index: 99999;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 22px; cursor: pointer; backdrop-filter: blur(10px);
+      pointer-events: auto; touch-action: manipulation;
+    }
+    #menu-toggle:active {
+      background: rgba(80, 80, 80, 0.9);
+      transform: scale(0.92);
+    }
+
+    /* Expanded Main Window */
+    #main-window {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      width: 92vw; max-width: 440px;
+      height: 85vh; max-height: 600px;
+      background: rgba(12, 12, 12, 0.96);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px; z-index: 100000;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none; transition: all 0.2s ease-out;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+    }
+    #main-window.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1; pointer-events: auto;
+    }
+
+    /* Window Header */
+    .window-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .window-title { font-size: 17px; font-weight: 600; letter-spacing: 0.5px; }
+    .close-btn { 
+      background: none; border: none; color: #fff; font-size: 26px; 
+      cursor: pointer; padding: 4px 10px; line-height: 1;
+    }
+
+    /* Window Content Layout */
+    .window-content {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 16px; gap: 14px; overflow-y: auto;
+    }
+    
+    /* Clean Settings Rows */
+    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #ccc; }
+    .setting-row select, .setting-row input[type="range"] {
+      background: #222; color: #fff; border: 1px solid #444; padding: 6px 10px; border-radius: 6px; outline: none;
+    }
+    .setting-row input[type="range"] { width: 120px; }
+
+    /* Action Buttons */
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .btn {
+      background: #222; border: 1px solid #444; color: #fff; padding: 10px;
+      border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center;
+      touch-action: manipulation;
+    }
+    .btn:active { background: #333; transform: scale(0.96); }
+    .btn.run { background: #1a472a; border-color: #2e8b57; }
+    .btn.clear { background: #4a1c1c; border-color: #8b0000; }
+
+    /* Code Editor */
+    #code-editor {
+      flex: 1; min-height: 140px; background: #080808; color: #00ffcc;
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+      padding: 12px; font-family: monospace; font-size: 13px; resize: none; outline: none;
+      touch-action: auto;
+    }
+
+    #telemetry { font-family: monospace; color: #888; font-size: 12px; text-align: center; }
   </style>
 </head>
 <body>
 
-  <header id="top-bar">
-    <div class="brand">𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</div>
-    <div class="engine-switcher">
-      <select id="engine-selector">
-        <option value="pixi">PixiJS 2D</option>
-        <option value="matter">Matter.js Physics</option>
-        <option value="three" selected>Three.js 3D</option>
-        <option value="babylon">Babylon.js Full 3D</option>
-      </select>
-    </div>
-    <div class="quick-actions">
-      <button id="btn-run" class="action-btn primary">▶ Run</button>
-      <button id="btn-stop" class="action-btn">⏹ Stop</button>
-      <button id="btn-clear" class="action-btn danger">🗑 Clear All</button>
-    </div>
-    <div id="telemetry-hud">
-      <span id="fps-counter">0 FPS</span> | <span id="mem-counter">-- MB</span>
-    </div>
-  </header>
-
+  <!-- Fullscreen 4K Context -->
   <canvas id="render-canvas"></canvas>
 
-  <div id="virtual-joystick-container">
+  <!-- Touch Joystick -->
+  <div id="joystick-container">
     <div id="joystick-base"><div id="joystick-stick"></div></div>
   </div>
 
-  <div id="floating-window" class="floating-window">
-    <div class="window-header" id="window-drag-handle">
-      <span class="window-title">Workspace & Settings</span>
-      <div class="window-controls">
-        <button id="btn-minimize">_</button>
-        <button id="btn-maximize">□</button>
-      </div>
+  <!-- Menu Trigger Button -->
+  <div id="menu-toggle" role="button" aria-label="Open Settings">⚙</div>
+
+  <!-- Central Modal Window -->
+  <div id="main-window">
+    <div class="window-header">
+      <div class="window-title">Executor Control</div>
+      <button class="close-btn" id="btn-close" aria-label="Close Settings">×</button>
     </div>
-    <div class="window-content" id="window-content">
-      <div class="settings-grid">
-        <label>Joystick Opacity: <input type="range" id="joy-opacity" min="0" max="1" step="0.1" value="0.7"></label>
+    
+    <div class="window-content">
+      <div id="telemetry">0 FPS</div>
+
+      <div class="setting-row">
+        <span>Engine</span>
+        <select id="engine-select">
+          <option value="none">Raw Canvas</option>
+          <option value="pixi">PixiJS</option>
+          <option value="three">Three.js</option>
+        </select>
       </div>
-      <textarea id="code-editor" spellcheck="false" placeholder="// Input.joystick (x, y, angle, distance, isActive)&#10;ctx.fillStyle = 'rgba(0, 255, 200, 0.1)';&#10;ctx.fillRect(0, 0, canvas.width, canvas.height);"></textarea>
+
+      <div class="setting-row">
+        <span>Joystick Opacity</span>
+        <input type="range" id="joy-opacity" min="0" max="1" step="0.1" value="0.5">
+      </div>
+
+      <div class="action-grid">
+        <button class="btn run" id="btn-run">Run</button>
+        <button class="btn" id="btn-stop">Stop</button>
+        <button class="btn clear" id="btn-clear">Clear</button>
+      </div>
+
+      <textarea id="code-editor" spellcheck="false" placeholder="// Paste custom scripts here..."></textarea>
     </div>
   </div>
 
   <script>
-    // 1. High-DPI Canvas & Context
+    // 1. Scaled Display Context
     const canvas = document.getElementById('render-canvas');
     const ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
+    function resize() {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.scale(dpr, dpr);
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    window.addEventListener('resize', resize);
+    resize();
 
-    // 2. Virtual Input Bridge (Math & Touch Logic)
-    window.Input = { joystick: { x: 0, y: 0, angle: 0, distance: 0, isActive: false }, buttons: {} };
-    const joyContainer = document.getElementById('virtual-joystick-container');
-    const joyStick = document.getElementById('joystick-stick');
-    let joyCenter = { x: 0, y: 0 };
-    let joyRadius = 0;
+    // 2. Reliable Tap/Click Handlers
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainWindow = document.getElementById('main-window');
+    const btnClose = document.getElementById('btn-close');
 
-    function initJoystickBounds() {
-      const rect = joyContainer.getBoundingClientRect();
-      joyCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      joyRadius = rect.width / 2;
+    function openWindow(e) {
+      if (e) e.preventDefault();
+      mainWindow.classList.add('active');
     }
 
-    joyContainer.addEventListener('pointerdown', (e) => {
-      window.Input.joystick.isActive = true;
-      initJoystickBounds();
-      handleJoystickMove(e);
-      joyContainer.setPointerCapture(e.pointerId);
-    });
-
-    joyContainer.addEventListener('pointermove', (e) => {
-      if (!window.Input.joystick.isActive) return;
-      handleJoystickMove(e);
-    });
-
-    function handleJoystickMove(e) {
-      const dx = e.clientX - joyCenter.x;
-      const dy = e.clientY - joyCenter.y;
-      const distance = Math.min(Math.sqrt(dx * dx + dy * dy), joyRadius);
-      const angle = Math.atan2(dy, dx);
-
-      const stickX = Math.cos(angle) * distance;
-      const stickY = Math.sin(angle) * distance;
-      
-      joyStick.style.transform = `translate(calc(-50% + ${stickX}px), calc(-50% + ${stickY}px))`;
-      
-      window.Input.joystick.x = stickX / joyRadius;
-      window.Input.joystick.y = stickY / joyRadius;
-      window.Input.joystick.angle = angle;
-      window.Input.joystick.distance = distance / joyRadius;
+    function closeWindow(e) {
+      if (e) e.preventDefault();
+      mainWindow.classList.remove('active');
     }
 
-    function resetJoystick() {
-      window.Input.joystick = { x: 0, y: 0, angle: 0, distance: 0, isActive: false };
-      joyStick.style.transform = `translate(-50%, -50%)`;
-    }
-    
-    joyContainer.addEventListener('pointerup', (e) => {
-      resetJoystick();
-      joyContainer.releasePointerCapture(e.pointerId);
-    });
+    // Bind both pointerdown (touch/stylus) and click for guaranteed responsiveness
+    menuToggle.addEventListener('pointerdown', openWindow);
+    btnClose.addEventListener('pointerdown', closeWindow);
 
-    // 3. Floating Window Logic
-    const win = document.getElementById('floating-window');
-    const handle = document.getElementById('window-drag-handle');
-    let isDragging = false, startX, startY, initLeft, initTop;
-
-    handle.addEventListener('pointerdown', (e) => {
-      if (e.target.tagName === 'BUTTON' || win.classList.contains('maximized')) return;
-      isDragging = true; startX = e.clientX; startY = e.clientY;
-      initLeft = win.offsetLeft; initTop = win.offsetTop;
-      handle.setPointerCapture(e.pointerId);
-    });
-    handle.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      win.style.left = `${initLeft + (e.clientX - startX)}px`;
-      win.style.top = `${initTop + (e.clientY - startY)}px`;
-    });
-    handle.addEventListener('pointerup', (e) => { isDragging = false; handle.releasePointerCapture(e.pointerId); });
-    document.getElementById('btn-minimize').onclick = () => win.classList.toggle('minimized');
-    document.getElementById('btn-maximize').onclick = () => win.classList.toggle('maximized');
-
-    // 4. Telemetry (FPS Loop)
+    // 3. Telemetry FPS Loop
     let lastTime = performance.now();
     let frames = 0;
-    const fpsCounter = document.getElementById('fps-counter');
-
-    function updateTelemetry() {
+    const fpsDisplay = document.getElementById('telemetry');
+    function loop() {
       const now = performance.now();
       frames++;
       if (now - lastTime >= 1000) {
-        fpsCounter.innerText = `${frames} FPS`;
-        frames = 0;
+        fpsDisplay.innerText = `${frames} FPS | Direct Touch Active`;
+        frames = 0; 
         lastTime = now;
       }
-      requestAnimationFrame(updateTelemetry);
+      requestAnimationFrame(loop);
     }
-    updateTelemetry();
+    loop();
 
-    // 5. Engine Switcher & Teardown Architecture
-    document.getElementById('engine-selector').addEventListener('change', (e) => {
-      const engine = e.target.value;
-      console.log(`[EXECUTOR] Teardown active environment. Switching to: ${engine}`);
-      if (window.activeCleanup) window.activeCleanup();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Inject boilerplate for active engine here (e.g., dynamically load PixiJS via CDN)
+    // 4. Mobile Joystick Logic
+    window.Input = { joystick: { x: 0, y: 0, isActive: false } };
+    const joyContainer = document.getElementById('joystick-container');
+    const joyStick = document.getElementById('joystick-stick');
+    let jCenter = { x: 0, y: 0 }, jRadius = 0;
+
+    joyContainer.addEventListener('pointerdown', (e) => {
+      window.Input.joystick.isActive = true;
+      const rect = joyContainer.getBoundingClientRect();
+      jCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      jRadius = rect.width / 2;
+      joyContainer.setPointerCapture(e.pointerId);
+      moveStick(e);
     });
 
-    // 6. Execution Sandbox
-    const codeEditor = document.getElementById('code-editor');
-    document.getElementById('btn-run').onclick = () => {
-      try {
-        if (window.activeCleanup) window.activeCleanup();
-        const execute = new Function('Input', 'canvas', 'ctx', `"use strict";\n${codeEditor.value}`);
-        execute(window.Input, canvas, ctx);
-      } catch (err) {
-        console.error("Execution Error:", err);
-      }
-    };
-    
-    document.getElementById('btn-stop').onclick = () => { if (window.activeCleanup) window.activeCleanup(); };
-    document.getElementById('btn-clear').onclick = () => {
-      codeEditor.value = '';
-      if (window.activeCleanup) window.activeCleanup();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
+    joyContainer.addEventListener('pointermove', (e) => {
+      if (window.Input.joystick.isActive) moveStick(e);
+    });
+
+    function releaseStick(e) {
+      window.Input.joystick.isActive = false;
+      joyStick.style.transform = `translate(-50%, -50%)`;
+      try { joyContainer.releasePointerCapture(e.pointerId); } catch(err) {}
+    }
+
+    joyContainer.addEventListener('pointerup', releaseStick);
+    joyContainer.addEventListener('pointercancel', releaseStick);
+
+    function moveStick(e) {
+      const dx = e.clientX - jCenter.x;
+      const dy = e.clientY - jCenter.y;
+      const dist = Math.min(Math.sqrt(dx * dx + dy * dy), jRadius);
+      const angle = Math.atan2(dy, dx);
+      const sx = Math.cos(angle) * dist;
+      const sy = Math.sin(angle) * dist;
+      joyStick.style.transform = `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px))`;
+      window.Input.joystick.x = sx / jRadius;
+      window.Input.joystick.y = sy / jRadius;
+    }
+
+    // 5. Settings & Execution
     document.getElementById('joy-opacity').addEventListener('input', (e) => {
       joyContainer.style.opacity = e.target.value;
     });
+
+    const editor = document.getElementById('code-editor');
+    document.getElementById('btn-run').onclick = () => {
+      try {
+        mainWindow.classList.remove('active');
+        new Function('canvas', 'ctx', 'Input', `"use strict";\n${editor.value}`)(canvas, ctx, window.Input);
+      } catch (err) { 
+        alert("Script error: " + err.message); 
+      }
+    };
+
+    document.getElementById('btn-clear').onclick = () => {
+      editor.value = ''; 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
   </script>
 </body>
 </html>
