@@ -28,9 +28,12 @@
       overflow: hidden; touch-action: none;
     }
 
-    #render-canvas {
+    #canvas-container {
       position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
       pointer-events: auto;
+    }
+    canvas {
+      width: 100%; height: 100%; display: block;
     }
 
     #top-floating-pill {
@@ -149,7 +152,7 @@
 </head>
 <body>
 
-  <canvas id="render-canvas"></canvas>
+  <div id="canvas-container"></div>
 
   <div id="top-floating-pill" role="button" aria-label="Open Sodium Menu">
     <span class="brand-text">SODIUM</span>
@@ -208,18 +211,35 @@
   </div>
 
   <script>
-    const canvas = document.getElementById('render-canvas');
-    let ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
+    const container = document.getElementById('canvas-container');
+    let canvas = document.createElement('canvas');
+    let ctx = null;
+
+    function recreateCanvas(contextType) {
+      if (window.activeCleanup) window.activeCleanup();
+      container.innerHTML = '';
+      canvas = document.createElement('canvas');
+      container.appendChild(canvas);
+
       const dpr = Math.max(window.devicePixelRatio || 1, 2);
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
+
+      if (contextType === 'webgl') {
+        ctx = canvas.getContext('webgl2', { alpha: false, antialias: true }) || canvas.getContext('webgl', { alpha: false, antialias: true });
+        if (!ctx) throw new Error("WebGL context creation failed on this device.");
+      } else {
+        ctx = canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+      }
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+
+    recreateCanvas('raw');
+    window.addEventListener('resize', () => {
+      const engineType = document.getElementById('engine-select').value;
+      recreateCanvas(engineType === 'webgl' ? 'webgl' : 'raw');
+    });
 
     const topPill = document.getElementById('top-floating-pill');
     const mainWindow = document.getElementById('main-window');
@@ -313,15 +333,8 @@
     document.getElementById('btn-run').onclick = () => {
       try {
         mainWindow.classList.remove('active');
-        if (window.activeCleanup) window.activeCleanup();
-        
         const engineType = document.getElementById('engine-select').value;
-        if (engineType === 'webgl') {
-          ctx = canvas.getContext('webgl2') || canvas.getContext('webgl');
-        } else {
-          ctx = canvas.getContext('2d');
-          resizeCanvas();
-        }
+        recreateCanvas(engineType);
 
         const userFunc = new Function('canvas', 'ctx', 'Input', `"use strict";\n${editor.value}`);
         userFunc(canvas, ctx, window.Input);
@@ -332,13 +345,13 @@
 
     document.getElementById('btn-stop').onclick = () => {
       if (window.activeCleanup) window.activeCleanup();
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      if (ctx && ctx.clearRect) ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     document.getElementById('btn-clear').onclick = () => {
       editor.value = '';
       if (window.activeCleanup) window.activeCleanup();
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      if (ctx && ctx.clearRect) ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
   </script>
 </body>
