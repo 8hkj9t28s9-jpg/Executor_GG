@@ -32,9 +32,7 @@
       position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
       pointer-events: auto;
     }
-    canvas {
-      width: 100%; height: 100%; display: block;
-    }
+    canvas { width: 100%; height: 100%; display: block; }
 
     #top-floating-pill {
       position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
@@ -56,7 +54,7 @@
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0.95);
       width: 92vw; max-width: 440px;
-      height: 86vh; max-height: 640px;
+      height: 88vh; max-height: 680px;
       background: var(--glass-bg);
       backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
       border: var(--glass-border);
@@ -113,7 +111,7 @@
     .btn.clear { background: #260d0d; border-color: #4a1515; color: #e74c3c; }
 
     #code-editor {
-      flex: 1; min-height: 110px; background: #020202; color: #00ffcc;
+      flex: 1; min-height: 100px; background: #020202; color: #00ffcc;
       border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
       padding: 12px; font-family: monospace; font-size: 12px; resize: none; outline: none;
       touch-action: auto; -webkit-user-select: text; user-select: text;
@@ -134,6 +132,7 @@
       opacity: 1;
     }
 
+    /* On-Screen Touch Controls */
     #joystick-container {
       position: absolute; bottom: 30px; left: 30px;
       width: 120px; height: 120px; z-index: 20;
@@ -148,6 +147,23 @@
       top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
       box-shadow: var(--neon-glow);
     }
+
+    #gamepad-container {
+      position: absolute; bottom: 30px; right: 30px;
+      width: 130px; height: 130px; z-index: 20;
+      opacity: 0.6; transition: opacity 0.2s; touch-action: none; display: block;
+    }
+    .gp-btn {
+      position: absolute; width: 44px; height: 44px; background: rgba(20,20,20,0.85);
+      border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; color: #fff;
+      font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--neon-glow); user-select: none;
+    }
+    .gp-btn:active, .gp-btn.pressed { background: rgba(255,255,255,0.3); transform: scale(0.92); }
+    #btn-y { top: 0; left: 43px; }
+    #btn-x { top: 43px; left: 0; }
+    #btn-a { top: 43px; right: 0; }
+    #btn-b { bottom: 0; left: 43px; }
   </style>
 </head>
 <body>
@@ -162,6 +178,13 @@
 
   <div id="joystick-container">
     <div id="joystick-base"><div id="joystick-stick"></div></div>
+  </div>
+
+  <div id="gamepad-container">
+    <div class="gp-btn" id="btn-y" data-key="y">Y</div>
+    <div class="gp-btn" id="btn-x" data-key="x">X</div>
+    <div class="gp-btn" id="btn-a" data-key="a">A</div>
+    <div class="gp-btn" id="btn-b" data-key="b">B</div>
   </div>
 
   <div id="main-window">
@@ -187,11 +210,11 @@
 
       <div class="setting-group-title">Interface & Controls</div>
       <div class="setting-row">
-        <span>Joystick Visibility</span>
+        <span>Joystick & Buttons Visibility</span>
         <input type="checkbox" id="toggle-joystick" checked>
       </div>
       <div class="setting-row">
-        <span>Joystick Opacity</span>
+        <span>Controls Opacity</span>
         <input type="range" id="joy-opacity" min="0.1" max="1" step="0.1" value="0.6">
       </div>
       <div class="setting-row">
@@ -206,7 +229,7 @@
         <button class="btn clear" id="btn-clear">🗑 Clear</button>
       </div>
 
-      <textarea id="code-editor" spellcheck="false" placeholder="// Paste script here...&#10;ctx.fillStyle = '#ffffff';&#10;ctx.fillRect(80, 80, 120, 120);"></textarea>
+      <textarea id="code-editor" spellcheck="false" placeholder="// Paste script here..."></textarea>
     </div>
   </div>
 
@@ -273,7 +296,12 @@
     }
     loop();
 
-    window.Input = { joystick: { x: 0, y: 0, angle: 0, distance: 0, isActive: false } };
+    window.Input = {
+      joystick: { x: 0, y: 0, angle: 0, distance: 0, isActive: false },
+      buttons: { a: false, b: false, x: false, y: false }
+    };
+
+    // Joystick Logic
     const joyContainer = document.getElementById('joystick-container');
     const joyStick = document.getElementById('joystick-stick');
     let jCenter = { x: 0, y: 0 }, jRadius = 0;
@@ -317,11 +345,34 @@
       window.Input.joystick.distance = dist / jRadius;
     }
 
+    // Action Buttons Logic (A, B, X, Y)
+    document.querySelectorAll('.gp-btn').forEach(btn => {
+      const key = btn.getAttribute('data-key');
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        window.Input.buttons[key] = true;
+        btn.classList.add('pressed');
+        btn.setPointerCapture(e.pointerId);
+      });
+      const releaseBtn = (e) => {
+        window.Input.buttons[key] = false;
+        btn.classList.remove('pressed');
+        try { btn.releasePointerCapture(e.pointerId); } catch(err) {}
+      };
+      btn.addEventListener('pointerup', releaseBtn);
+      btn.addEventListener('pointercancel', releaseBtn);
+    });
+
+    // Settings Controls
     document.getElementById('joy-opacity').addEventListener('input', (e) => {
-      joyContainer.style.opacity = e.target.value;
+      const val = e.target.value;
+      joyContainer.style.opacity = val;
+      document.getElementById('gamepad-container').style.opacity = val;
     });
     document.getElementById('toggle-joystick').addEventListener('change', (e) => {
-      joyContainer.style.display = e.target.checked ? 'block' : 'none';
+      const display = e.target.checked ? 'block' : 'none';
+      joyContainer.style.display = display;
+      document.getElementById('gamepad-container').style.display = display;
     });
     document.getElementById('toggle-buttons').addEventListener('change', (e) => {
       const grid = document.getElementById('action-grid-container');
@@ -346,6 +397,10 @@
     document.getElementById('btn-stop').onclick = () => {
       if (window.activeCleanup) window.activeCleanup();
       if (ctx && ctx.clearRect) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (ctx && ctx.clear) {
+        ctx.clearColor(0,0,0,1);
+        ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
+      }
     };
 
     document.getElementById('btn-clear').onclick = () => {
