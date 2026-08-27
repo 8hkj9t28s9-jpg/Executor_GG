@@ -3,173 +3,198 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Executor</title>
+  <title>𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</title>
   <style>
-    /* Super Black & Smooth Rendering */
+    :root {
+      --neon-bloom: 0 0 6px #ffffff, 0 0 15px #ffffff, 0 0 30px #ffffff;
+      --glass-bg: rgba(8, 8, 8, 0.95);
+      --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; padding: 0; width: 100vw; height: 100vh;
       background-color: #000000; color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
-      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
       overflow: hidden; touch-action: none;
     }
-    
-    * { 
-      box-sizing: border-box; 
-      -webkit-tap-highlight-color: transparent; 
-    }
 
-    /* Canvas Layer (Bottom) */
+    /* Hardware-Accelerated Canvas */
     #render-canvas {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
       pointer-events: auto;
     }
 
-    /* Joystick Layer */
-    #joystick-container {
-      position: absolute; bottom: 30px; left: 30px;
-      width: 120px; height: 120px; z-index: 20;
-      opacity: 0.5; transition: opacity 0.2s; touch-action: none;
+    /* Small Floating Brand Header on Top */
+    #top-floating-pill {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 15, 15, 0.88);
+      border: var(--glass-border);
+      padding: 5px 14px; border-radius: 16px; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.9);
+      touch-action: manipulation;
     }
-    #joystick-base {
-      width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.4);
-      border-radius: 50%; position: relative;
+    #top-floating-pill .brand-text {
+      font-family: serif; font-weight: 700; font-style: italic; font-size: 0.85rem;
+      letter-spacing: 1.2px; text-shadow: var(--neon-bloom); color: #fff;
     }
-    #joystick-stick {
-      width: 40%; height: 40%; background: #ffffff; border-radius: 50%; position: absolute;
-      top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
-    }
+    #top-floating-pill:active { transform: translateX(-50%) scale(0.94); }
 
-    /* Tiny Floating Button (Always Clickable) */
-    #menu-toggle {
-      position: absolute; top: 20px; left: 20px;
-      width: 48px; height: 48px;
-      background: rgba(30, 30, 30, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 10px; z-index: 99999;
-      display: flex; justify-content: center; align-items: center;
-      font-size: 22px; cursor: pointer; backdrop-filter: blur(10px);
-      pointer-events: auto; touch-action: manipulation;
-    }
-    #menu-toggle:active {
-      background: rgba(80, 80, 80, 0.9);
-      transform: scale(0.92);
-    }
-
-    /* Expanded Main Window */
+    /* Central Control Modal Window */
     #main-window {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0.95);
-      width: 92vw; max-width: 440px;
-      height: 85vh; max-height: 600px;
-      background: rgba(12, 12, 12, 0.96);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      width: 94vw; max-width: 440px;
+      height: 86vh; max-height: 620px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+      border: var(--glass-border);
       border-radius: 14px; z-index: 100000;
       display: flex; flex-direction: column;
-      opacity: 0; pointer-events: none; transition: all 0.2s ease-out;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+      opacity: 0; pointer-events: none; transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.98);
     }
     #main-window.active {
       transform: translate(-50%, -50%) scale(1);
       opacity: 1; pointer-events: auto;
     }
 
-    /* Window Header */
     .window-header {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .window-title { font-size: 17px; font-weight: 600; letter-spacing: 0.5px; }
+    .window-title {
+      font-family: serif; font-weight: 700; font-style: italic; font-size: 1rem;
+      letter-spacing: 1px; text-shadow: var(--neon-bloom); color: #fff;
+    }
     .close-btn { 
-      background: none; border: none; color: #fff; font-size: 26px; 
-      cursor: pointer; padding: 4px 10px; line-height: 1;
+      background: none; border: none; color: #888; font-size: 22px; 
+      cursor: pointer; padding: 0 4px; line-height: 1;
     }
+    .close-btn:active { color: #fff; }
 
-    /* Window Content Layout */
     .window-content {
       flex: 1; display: flex; flex-direction: column;
-      padding: 16px; gap: 14px; overflow-y: auto;
+      padding: 14px; gap: 10px; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    
-    /* Clean Settings Rows */
-    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #ccc; }
-    .setting-row select, .setting-row input[type="range"] {
-      background: #222; color: #fff; border: 1px solid #444; padding: 6px 10px; border-radius: 6px; outline: none;
-    }
-    .setting-row input[type="range"] { width: 120px; }
 
-    /* Action Buttons */
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .setting-group-title {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+      color: #777; margin-top: 2px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px;
+    }
+
+    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #ccc; }
+    .setting-row select, .setting-row input[type="range"] {
+      background: #141414; color: #fff; border: 1px solid #333; padding: 5px 8px; border-radius: 5px; outline: none; font-size: 12px;
+    }
+    .setting-row input[type="range"] { width: 100px; cursor: pointer; }
+
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .btn {
-      background: #222; border: 1px solid #444; color: #fff; padding: 10px;
-      border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center;
+      background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 9px;
+      border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
       touch-action: manipulation;
     }
-    .btn:active { background: #333; transform: scale(0.96); }
-    .btn.run { background: #1a472a; border-color: #2e8b57; }
-    .btn.clear { background: #4a1c1c; border-color: #8b0000; }
+    .btn:active { background: #282828; transform: scale(0.97); }
+    .btn.run { background: #0c2417; border-color: #174226; color: #2ecc71; }
+    .btn.clear { background: #2d1010; border-color: #521c1c; color: #e74c3c; }
 
-    /* Code Editor */
     #code-editor {
-      flex: 1; min-height: 140px; background: #080808; color: #00ffcc;
-      border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
-      padding: 12px; font-family: monospace; font-size: 13px; resize: none; outline: none;
-      touch-action: auto;
+      flex: 1; min-height: 110px; background: #030303; color: #00ffcc;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;
+      padding: 10px; font-family: monospace; font-size: 12px; resize: none; outline: none;
+      touch-action: auto; -webkit-user-select: text; user-select: text;
     }
 
-    #telemetry { font-family: monospace; color: #888; font-size: 12px; text-align: center; }
+    #telemetry { font-family: monospace; color: #555; font-size: 10px; text-align: center; }
+
+    /* Highly Optimized Mobile Touch Joystick */
+    #joystick-container {
+      position: absolute; bottom: 24px; left: 24px;
+      width: 110px; height: 110px; z-index: 20;
+      opacity: 0.6; transition: opacity 0.2s; touch-action: none; display: block;
+    }
+    #joystick-base {
+      width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%; position: relative; background: rgba(255,255,255,0.02);
+    }
+    #joystick-stick {
+      width: 40px; height: 40px; background: #ffffff; border-radius: 50%; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
+      box-shadow: var(--neon-bloom);
+    }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen 4K Context -->
+  <!-- Fullscreen Hardware Canvas -->
   <canvas id="render-canvas"></canvas>
+
+  <!-- Top Floating Brand Header -->
+  <div id="top-floating-pill" role="button" aria-label="Open Executor Menu">
+    <span class="brand-text">𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</span>
+  </div>
 
   <!-- Touch Joystick -->
   <div id="joystick-container">
     <div id="joystick-base"><div id="joystick-stick"></div></div>
   </div>
 
-  <!-- Menu Trigger Button -->
-  <div id="menu-toggle" role="button" aria-label="Open Settings">⚙</div>
-
-  <!-- Central Modal Window -->
+  <!-- Central Control Window (All Settings, Engines, and Editor) -->
   <div id="main-window">
     <div class="window-header">
-      <div class="window-title">Executor Control</div>
+      <div class="window-title">𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</div>
       <button class="close-btn" id="btn-close" aria-label="Close Settings">×</button>
     </div>
     
     <div class="window-content">
-      <div id="telemetry">0 FPS</div>
+      <div id="telemetry">60 FPS | Super-Black OLED Mode</div>
 
+      <div class="setting-group-title">Engine Suite</div>
       <div class="setting-row">
-        <span>Engine</span>
+        <span>Active Engine</span>
         <select id="engine-select">
-          <option value="none">Raw Canvas</option>
-          <option value="pixi">PixiJS</option>
-          <option value="three">Three.js</option>
+          <option value="raw" selected>Raw Canvas [2D Context]</option>
+          <option value="pixi">PixiJS 2D [Sprites & Particles]</option>
+          <option value="matter">Matter.js [2D Physics World]</option>
+          <option value="three">Three.js 3D [Pipelines & PBR]</option>
+          <option value="babylon">Babylon.js [Full 3D Engine]</option>
         </select>
       </div>
 
+      <div class="setting-group-title">Joystick & Controls</div>
+      <div class="setting-row">
+        <span>Joystick Visibility</span>
+        <input type="checkbox" id="toggle-joystick" checked>
+      </div>
       <div class="setting-row">
         <span>Joystick Opacity</span>
-        <input type="range" id="joy-opacity" min="0" max="1" step="0.1" value="0.5">
+        <input type="range" id="joy-opacity" min="0.1" max="1" step="0.1" value="0.6">
+      </div>
+      <div class="setting-row">
+        <span>Stick Mode</span>
+        <select id="joystick-mode">
+          <option value="fixed">Fixed Position</option>
+          <option value="floating">Dynamic Floating</option>
+        </select>
       </div>
 
+      <div class="setting-group-title">Script Workspace</div>
       <div class="action-grid">
-        <button class="btn run" id="btn-run">Run</button>
-        <button class="btn" id="btn-stop">Stop</button>
-        <button class="btn clear" id="btn-clear">Clear</button>
+        <button class="btn run" id="btn-run">▶ Run</button>
+        <button class="btn" id="btn-stop">⏹ Stop</button>
+        <button class="btn clear" id="btn-clear">🗑 Clear</button>
       </div>
 
-      <textarea id="code-editor" spellcheck="false" placeholder="// Paste custom scripts here..."></textarea>
+      <textarea id="code-editor" spellcheck="false" placeholder="// Write custom script here...&#10;ctx.fillStyle = '#ffffff';&#10;ctx.fillRect(80, 80, 120, 120);"></textarea>
     </div>
   </div>
 
   <script>
-    // 1. Scaled Display Context
+    // 1. High-Performance Mobile Canvas Scaling
     const canvas = document.getElementById('render-canvas');
     const ctx = canvas.getContext('2d');
     function resize() {
@@ -181,24 +206,20 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // 2. Reliable Tap/Click Handlers
-    const menuToggle = document.getElementById('menu-toggle');
+    // 2. Top Pill Menu Toggle
+    const topPill = document.getElementById('top-floating-pill');
     const mainWindow = document.getElementById('main-window');
     const btnClose = document.getElementById('btn-close');
 
-    function openWindow(e) {
-      if (e) e.preventDefault();
+    topPill.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       mainWindow.classList.add('active');
-    }
+    });
 
-    function closeWindow(e) {
-      if (e) e.preventDefault();
+    btnClose.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       mainWindow.classList.remove('active');
-    }
-
-    // Bind both pointerdown (touch/stylus) and click for guaranteed responsiveness
-    menuToggle.addEventListener('pointerdown', openWindow);
-    btnClose.addEventListener('pointerdown', closeWindow);
+    });
 
     // 3. Telemetry FPS Loop
     let lastTime = performance.now();
@@ -208,7 +229,7 @@
       const now = performance.now();
       frames++;
       if (now - lastTime >= 1000) {
-        fpsDisplay.innerText = `${frames} FPS | Direct Touch Active`;
+        fpsDisplay.innerText = `${frames} FPS | Mobile Optimized OLED`;
         frames = 0; 
         lastTime = now;
       }
@@ -216,8 +237,8 @@
     }
     loop();
 
-    // 4. Mobile Joystick Logic
-    window.Input = { joystick: { x: 0, y: 0, isActive: false } };
+    // 4. Mobile Optimized Touch Joystick Mechanics
+    window.Input = { joystick: { x: 0, y: 0, angle: 0, distance: 0, isActive: false } };
     const joyContainer = document.getElementById('joystick-container');
     const joyStick = document.getElementById('joystick-stick');
     let jCenter = { x: 0, y: 0 }, jRadius = 0;
@@ -237,6 +258,9 @@
 
     function releaseStick(e) {
       window.Input.joystick.isActive = false;
+      window.Input.joystick.x = 0;
+      window.Input.joystick.y = 0;
+      window.Input.joystick.distance = 0;
       joyStick.style.transform = `translate(-50%, -50%)`;
       try { joyContainer.releasePointerCapture(e.pointerId); } catch(err) {}
     }
@@ -254,13 +278,24 @@
       joyStick.style.transform = `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px))`;
       window.Input.joystick.x = sx / jRadius;
       window.Input.joystick.y = sy / jRadius;
+      window.Input.joystick.angle = angle;
+      window.Input.joystick.distance = dist / jRadius;
     }
 
-    // 5. Settings & Execution
+    // 5. Settings & Event Handlers
     document.getElementById('joy-opacity').addEventListener('input', (e) => {
       joyContainer.style.opacity = e.target.value;
     });
 
+    document.getElementById('toggle-joystick').addEventListener('change', (e) => {
+      joyContainer.style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    document.getElementById('engine-select').addEventListener('change', (e) => {
+      console.log(`Engine switched to: ${e.target.value}`);
+    });
+
+    // 6. Script Execution Sandbox
     const editor = document.getElementById('code-editor');
     document.getElementById('btn-run').onclick = () => {
       try {
@@ -269,6 +304,10 @@
       } catch (err) { 
         alert("Script error: " + err.message); 
       }
+    };
+
+    document.getElementById('btn-stop').onclick = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     document.getElementById('btn-clear').onclick = () => {
