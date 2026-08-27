@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SODIUM</title>
 
-  <!-- Home Screen App Settings & Native Web App Manifest Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SODIUM">
   <meta name="theme-color" content="#000000">
 
-  <!-- Sodium Home Screen App Icon with Subdued Neon Glow -->
   <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000000'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-style='italic' font-size='110' fill='%23ffffff' style='text-shadow: 0 0 8px %23ffffff, 0 0 16px %23ffffff;'>SODIUM</text></svg>">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000000'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-style='italic' font-size='110' fill='%23ffffff' style='text-shadow: 0 0 8px %23ffffff, 0 0 16px %23ffffff;'>SODIUM</text></svg>">
 
   <style>
     :root {
       --neon-glow: 0 0 4px #ffffff, 0 0 10px rgba(255, 255, 255, 0.4);
-      --glass-bg: rgba(8, 8, 8, 0.96);
+      --glass-bg: rgba(6, 6, 6, 0.97);
       --glass-border: 1px solid rgba(255, 255, 255, 0.12);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -30,21 +28,19 @@
       overflow: hidden; touch-action: none;
     }
 
-    /* Hardware-Accelerated Canvas */
     #render-canvas {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
       pointer-events: auto;
     }
 
-    /* Top Floating Brand Header with Subtle Neon Glow */
     #top-floating-pill {
-      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
       background: rgba(12, 12, 12, 0.9);
       border: var(--glass-border);
-      padding: 5px 16px; border-radius: 16px; z-index: 99999;
+      padding: 6px 18px; border-radius: 18px; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.9);
+      cursor: pointer; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.9);
       touch-action: manipulation;
     }
     #top-floating-pill .brand-text {
@@ -53,19 +49,18 @@
     }
     #top-floating-pill:active { transform: translateX(-50%) scale(0.94); }
 
-    /* Central Control Modal Window */
     #main-window {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0.95);
-      width: 94vw; max-width: 440px;
-      height: 86vh; max-height: 620px;
+      width: 92vw; max-width: 440px;
+      height: 86vh; max-height: 640px;
       background: var(--glass-bg);
-      backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
       border: var(--glass-border);
-      border-radius: 14px; z-index: 100000;
+      border-radius: 16px; z-index: 100000;
       display: flex; flex-direction: column;
       opacity: 0; pointer-events: none; transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.98);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.98);
     }
     #main-window.active {
       transform: translate(-50%, -50%) scale(1);
@@ -74,21 +69,21 @@
 
     .window-header {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .window-title {
       font-family: serif; font-weight: 700; font-style: italic; font-size: 1rem;
       letter-spacing: 1.2px; text-shadow: var(--neon-glow); color: #fff;
     }
     .close-btn { 
-      background: none; border: none; color: #777; font-size: 22px; 
+      background: none; border: none; color: #777; font-size: 24px; 
       cursor: pointer; padding: 0 4px; line-height: 1;
     }
     .close-btn:active { color: #fff; }
 
     .window-content {
       flex: 1; display: flex; flex-direction: column;
-      padding: 14px; gap: 10px; overflow-y: auto;
+      padding: 16px; gap: 12px; overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -99,14 +94,15 @@
 
     .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #bbb; }
     .setting-row select, .setting-row input[type="range"] {
-      background: #121212; color: #fff; border: 1px solid #2a2a2a; padding: 5px 8px; border-radius: 5px; outline: none; font-size: 12px;
+      background: #121212; color: #fff; border: 1px solid #2a2a2a; padding: 6px 10px; border-radius: 6px; outline: none; font-size: 12px;
     }
-    .setting-row input[type="range"] { width: 100px; cursor: pointer; }
+    .setting-row input[type="range"] { width: 110px; cursor: pointer; }
 
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; transition: opacity 0.2s; }
+    .action-grid.hidden { display: none; }
     .btn {
-      background: #161616; border: 1px solid #2a2a2a; color: #fff; padding: 9px;
-      border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
+      background: #161616; border: 1px solid #2a2a2a; color: #fff; padding: 10px;
+      border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
       touch-action: manipulation;
     }
     .btn:active { background: #222; transform: scale(0.97); }
@@ -115,17 +111,29 @@
 
     #code-editor {
       flex: 1; min-height: 110px; background: #020202; color: #00ffcc;
-      border: 1px solid rgba(255,255,255,0.06); border-radius: 6px;
-      padding: 10px; font-family: monospace; font-size: 12px; resize: none; outline: none;
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+      padding: 12px; font-family: monospace; font-size: 12px; resize: none; outline: none;
       touch-action: auto; -webkit-user-select: text; user-select: text;
     }
 
     #telemetry { font-family: monospace; color: #555; font-size: 10px; text-align: center; }
 
-    /* Optimized Mobile Touch Joystick with Subtle Glow */
+    #notification-toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: rgba(20, 5, 5, 0.95); border: 1px solid rgba(231, 76, 60, 0.4);
+      color: #ff6b6b; padding: 10px 20px; border-radius: 8px; font-size: 12px;
+      font-family: monospace; z-index: 200000; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      opacity: 0; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+      pointer-events: none; text-align: center; max-width: 90vw;
+    }
+    #notification-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
     #joystick-container {
-      position: absolute; bottom: 24px; left: 24px;
-      width: 110px; height: 110px; z-index: 20;
+      position: absolute; bottom: 30px; left: 30px;
+      width: 120px; height: 120px; z-index: 20;
       opacity: 0.6; transition: opacity 0.2s; touch-action: none; display: block;
     }
     #joystick-base {
@@ -133,7 +141,7 @@
       border-radius: 50%; position: relative; background: rgba(255,255,255,0.01);
     }
     #joystick-stick {
-      width: 40px; height: 40px; background: #ffffff; border-radius: 50%; position: absolute;
+      width: 44px; height: 44px; background: #ffffff; border-radius: 50%; position: absolute;
       top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
       box-shadow: var(--neon-glow);
     }
@@ -141,20 +149,18 @@
 </head>
 <body>
 
-  <!-- Fullscreen Hardware Canvas -->
   <canvas id="render-canvas"></canvas>
 
-  <!-- Top Floating Brand Header -->
   <div id="top-floating-pill" role="button" aria-label="Open Sodium Menu">
     <span class="brand-text">SODIUM</span>
   </div>
 
-  <!-- Touch Joystick -->
+  <div id="notification-toast"></div>
+
   <div id="joystick-container">
     <div id="joystick-base"><div id="joystick-stick"></div></div>
   </div>
 
-  <!-- Central Control Window (All Settings, Engines, and Editor) -->
   <div id="main-window">
     <div class="window-header">
       <div class="window-title">SODIUM</div>
@@ -162,21 +168,21 @@
     </div>
     
     <div class="window-content">
-      <div id="telemetry">60 FPS | Super-Black OLED Mode</div>
+      <div id="telemetry">60 FPS | 4K Native Ultra-Sharp Mode</div>
 
       <div class="setting-group-title">Engine Suite</div>
       <div class="setting-row">
-        <span>Active Engine</span>
+        <span>Active Pipeline</span>
         <select id="engine-select">
           <option value="raw" selected>Raw Canvas [2D Context]</option>
+          <option value="webgl">WebGL [OpenGL ES GPU Context]</option>
           <option value="pixi">PixiJS 2D [Sprites & Particles]</option>
           <option value="matter">Matter.js [2D Physics World]</option>
           <option value="three">Three.js 3D [Pipelines & PBR]</option>
-          <option value="babylon">Babylon.js [Full 3D Engine]</option>
         </select>
       </div>
 
-      <div class="setting-group-title">Joystick & Controls</div>
+      <div class="setting-group-title">Interface & Controls</div>
       <div class="setting-row">
         <span>Joystick Visibility</span>
         <input type="checkbox" id="toggle-joystick" checked>
@@ -186,53 +192,53 @@
         <input type="range" id="joy-opacity" min="0.1" max="1" step="0.1" value="0.6">
       </div>
       <div class="setting-row">
-        <span>Stick Mode</span>
-        <select id="joystick-mode">
-          <option value="fixed">Fixed Position</option>
-          <option value="floating">Dynamic Floating</option>
-        </select>
+        <span>Show Workspace Buttons</span>
+        <input type="checkbox" id="toggle-buttons" checked>
       </div>
 
       <div class="setting-group-title">Script Workspace</div>
-      <div class="action-grid">
+      <div class="action-grid" id="action-grid-container">
         <button class="btn run" id="btn-run">▶ Run</button>
         <button class="btn" id="btn-stop">⏹ Stop</button>
         <button class="btn clear" id="btn-clear">🗑 Clear</button>
       </div>
 
-      <textarea id="code-editor" spellcheck="false" placeholder="// Write custom script here...&#10;ctx.fillStyle = '#ffffff';&#10;ctx.fillRect(80, 80, 120, 120);"></textarea>
+      <textarea id="code-editor" spellcheck="false" placeholder="// Paste script here...&#10;ctx.fillStyle = '#ffffff';&#10;ctx.fillRect(80, 80, 120, 120);"></textarea>
     </div>
   </div>
 
   <script>
-    // 1. High-Performance Mobile Canvas Scaling
     const canvas = document.getElementById('render-canvas');
-    const ctx = canvas.getContext('2d');
-    function resize() {
-      const dpr = window.devicePixelRatio || 1;
+    let ctx = canvas.getContext('2d');
+    
+    function resizeCanvas() {
+      const dpr = Math.max(window.devicePixelRatio || 1, 2);
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    // 2. Top Pill Menu Toggle
     const topPill = document.getElementById('top-floating-pill');
     const mainWindow = document.getElementById('main-window');
     const btnClose = document.getElementById('btn-close');
 
-    topPill.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      mainWindow.classList.add('active');
-    });
+    topPill.addEventListener('pointerdown', (e) => { e.preventDefault(); mainWindow.classList.add('active'); });
+    btnClose.addEventListener('pointerdown', (e) => { e.preventDefault(); mainWindow.classList.remove('active'); });
 
-    btnClose.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      mainWindow.classList.remove('active');
-    });
+    const toast = document.getElementById('notification-toast');
+    let toastTimer = null;
+    function notifyError(message) {
+      toast.innerText = `⚠️ Error: ${message}`;
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
 
-    // 3. Telemetry FPS Loop
     let lastTime = performance.now();
     let frames = 0;
     const fpsDisplay = document.getElementById('telemetry');
@@ -240,15 +246,13 @@
       const now = performance.now();
       frames++;
       if (now - lastTime >= 1000) {
-        fpsDisplay.innerText = `${frames} FPS | Mobile Optimized OLED`;
-        frames = 0; 
-        lastTime = now;
+        fpsDisplay.innerText = `${frames} FPS | 4K Native Ultra-Sharp Mode`;
+        frames = 0; lastTime = now;
       }
       requestAnimationFrame(loop);
     }
     loop();
 
-    // 4. Mobile Optimized Touch Joystick Mechanics
     window.Input = { joystick: { x: 0, y: 0, angle: 0, distance: 0, isActive: false } };
     const joyContainer = document.getElementById('joystick-container');
     const joyStick = document.getElementById('joystick-stick');
@@ -293,37 +297,48 @@
       window.Input.joystick.distance = dist / jRadius;
     }
 
-    // 5. Settings & Event Handlers
     document.getElementById('joy-opacity').addEventListener('input', (e) => {
       joyContainer.style.opacity = e.target.value;
     });
-
     document.getElementById('toggle-joystick').addEventListener('change', (e) => {
       joyContainer.style.display = e.target.checked ? 'block' : 'none';
     });
-
-    document.getElementById('engine-select').addEventListener('change', (e) => {
-      console.log(`Engine switched to: ${e.target.value}`);
+    document.getElementById('toggle-buttons').addEventListener('change', (e) => {
+      const grid = document.getElementById('action-grid-container');
+      if (e.target.checked) grid.classList.remove('hidden');
+      else grid.classList.add('hidden');
     });
 
-    // 6. Script Execution Sandbox
     const editor = document.getElementById('code-editor');
     document.getElementById('btn-run').onclick = () => {
       try {
         mainWindow.classList.remove('active');
-        new Function('canvas', 'ctx', 'Input', `"use strict";\n${editor.value}`)(canvas, ctx, window.Input);
-      } catch (err) { 
-        alert("Script error: " + err.message); 
+        if (window.activeCleanup) window.activeCleanup();
+        
+        const engineType = document.getElementById('engine-select').value;
+        if (engineType === 'webgl') {
+          ctx = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        } else {
+          ctx = canvas.getContext('2d');
+          resizeCanvas();
+        }
+
+        const userFunc = new Function('canvas', 'ctx', 'Input', `"use strict";\n${editor.value}`);
+        userFunc(canvas, ctx, window.Input);
+      } catch (err) {
+        notifyError(err.message);
       }
     };
 
     document.getElementById('btn-stop').onclick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (window.activeCleanup) window.activeCleanup();
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     };
 
     document.getElementById('btn-clear').onclick = () => {
-      editor.value = ''; 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      editor.value = '';
+      if (window.activeCleanup) window.activeCleanup();
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     };
   </script>
 </body>
