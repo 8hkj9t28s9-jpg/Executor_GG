@@ -10,9 +10,6 @@
   <meta name="apple-mobile-web-app-title" content="SODIUM">
   <meta name="theme-color" content="#000000">
 
-  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000000'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-style='italic' font-size='110' fill='%23ffffff' style='text-shadow: 0 0 8px %23ffffff, 0 0 16px %23ffffff;'>SODIUM</text></svg>">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000000'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-style='italic' font-size='110' fill='%23ffffff' style='text-shadow: 0 0 8px %23ffffff, 0 0 16px %23ffffff;'>SODIUM</text></svg>">
-
   <style>
     :root {
       --neon-glow: 0 0 4px #ffffff, 0 0 10px rgba(255, 255, 255, 0.4);
@@ -24,15 +21,14 @@
       margin: 0; padding: 0; width: 100vw; height: 100vh;
       background-color: #000000; color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
-      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
       overflow: hidden; touch-action: none;
     }
 
     #canvas-container {
       position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
-      pointer-events: auto;
+      display: block; pointer-events: auto;
     }
-    canvas { width: 100%; height: 100%; display: block; }
+    canvas { width: 100vw !important; height: 100vh !important; display: block; }
 
     #top-floating-pill {
       position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
@@ -132,7 +128,6 @@
       opacity: 1;
     }
 
-    /* On-Screen Touch Controls */
     #joystick-container {
       position: absolute; bottom: 30px; left: 30px;
       width: 120px; height: 120px; z-index: 20;
@@ -200,8 +195,8 @@
       <div class="setting-row">
         <span>Active Pipeline</span>
         <select id="engine-select">
-          <option value="raw" selected>Raw Canvas [2D Context]</option>
-          <option value="webgl">WebGL [OpenGL ES GPU Context]</option>
+          <option value="raw">Raw Canvas [2D Context]</option>
+          <option value="webgl" selected>WebGL [OpenGL ES GPU Context]</option>
           <option value="pixi">PixiJS 2D [Sprites & Particles]</option>
           <option value="matter">Matter.js [2D Physics World]</option>
           <option value="three">Three.js 3D [Pipelines & PBR]</option>
@@ -229,7 +224,189 @@
         <button class="btn clear" id="btn-clear">🗑 Clear</button>
       </div>
 
-      <textarea id="code-editor" spellcheck="false" placeholder="// Paste script here..."></textarea>
+      <textarea id="code-editor" spellcheck="false">// SODIUM 100% Guaranteed WebGL 3D Game Engine
+const gl = ctx;
+if (!gl || typeof gl.createShader !== 'function') {
+  throw new Error("WebGL context not active! Please select 'WebGL' in the engine dropdown.");
+}
+
+const vsSource = `
+  attribute vec4 aVertexPosition;
+  attribute vec4 aVertexColor;
+  uniform mat4 uModelViewMatrix;
+  uniform mat4 uProjectionMatrix;
+  uniform float uPulse;
+  varying vec4 vColor;
+  void main(void) {
+    vec4 scaledPos = aVertexPosition * (1.0 + uPulse * 0.2);
+    gl_Position = uProjectionMatrix * uModelViewMatrix * scaledPos;
+    vColor = aVertexColor;
+  }
+`;
+
+const fsSource = `
+  precision mediump float;
+  varying vec4 vColor;
+  uniform vec3 uColorTint;
+  void main(void) {
+    gl_FragColor = vec4(vColor.rgb * uColorTint, vColor.a);
+  }
+`;
+
+function loadShader(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const info = gl.getShaderInfoLog(shader);
+    gl.deleteShader(shader);
+    throw new Error('Shader compile error: ' + info);
+  }
+  return shader;
+}
+
+const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+const shaderProgram = gl.createProgram();
+gl.attachShader(shaderProgram, vertexShader);
+gl.attachShader(shaderProgram, fragmentShader);
+gl.linkProgram(shaderProgram);
+
+const programInfo = {
+  program: shaderProgram,
+  attribLocations: {
+    vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+    vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
+  },
+  uniformLocations: {
+    projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+    modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+    uPulse: gl.getUniformLocation(shaderProgram, 'uPulse'),
+    uColorTint: gl.getUniformLocation(shaderProgram, 'uColorTint'),
+  },
+};
+
+const positions = [
+  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
+  -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,   1.0,  1.0, -1.0,   1.0, -1.0, -1.0,
+  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
+  -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0, -1.0,  1.0,  -1.0, -1.0,  1.0,
+   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0,
+  -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,  -1.0,  1.0,  1.0,  -1.0,  1.0, -1.0,
+];
+
+const faceColors = [
+  [0.0, 1.0, 0.8, 1.0], [1.0, 1.0, 1.0, 1.0], [0.0, 0.6, 1.0, 1.0],
+  [0.2, 0.2, 0.2, 1.0], [0.0, 1.0, 0.4, 1.0], [0.8, 0.0, 1.0, 1.0],
+];
+
+let colors = [];
+for (let i = 0; i < faceColors.length; ++i) {
+  for (let j = 0; j < 4; j++) colors = colors.concat(faceColors[i]);
+}
+
+const indices = [
+  0,  1,  2,    0,  2,  3,    4,  5,  6,    4,  6,  7,
+  8,  9,  10,   8,  10, 11,   12, 13, 14,   12, 14, 15,
+  16, 17, 18,   16, 18, 19,   20, 21, 22,   20, 22, 23
+];
+
+const positionBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+const colorBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+const indexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+let cubeRotation = 0.0, rotX = 0.0, rotY = 0.0, pulseVal = 0.0;
+
+function drawScene() {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+
+  if (Input.joystick.isActive) {
+    rotX += Input.joystick.y * 0.05;
+    rotY += Input.joystick.x * 0.05;
+  } else {
+    cubeRotation += 0.015;
+  }
+
+  let colorTint = [1.0, 1.0, 1.0];
+  if (Input.buttons.a) colorTint = [0.0, 1.0, 0.5];
+  if (Input.buttons.b) colorTint = [1.0, 0.2, 0.2];
+  if (Input.buttons.x) pulseVal = Math.sin(performance.now() * 0.01);
+  else pulseVal = 0.0;
+
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearDepth(1.0);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthFunc(gl.LEQUAL);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  const fieldOfView = 45 * Math.PI / 180;
+  const aspect = canvas.width / canvas.height;
+  const projectionMatrix = mat4CreatePerspective(fieldOfView, aspect, 0.1, 100.0);
+
+  const modelViewMatrix = mat4CreateIdentity();
+  mat4Translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, Input.buttons.y ? -4.0 : -6.0]);
+  mat4Rotate(modelViewMatrix, modelViewMatrix, cubeRotation + rotY, [0, 1, 0]);
+  mat4Rotate(modelViewMatrix, modelViewMatrix, 0.7 + rotX, [1, 0, 0]);
+
+  gl.useProgram(shaderProgram);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+  gl.uniform1f(programInfo.uniformLocations.uPulse, pulseVal);
+  gl.uniform3fv(programInfo.uniformLocations.uColorTint, colorTint);
+
+  gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+  window.activeAnimation = requestAnimationFrame(drawScene);
+}
+
+function mat4CreateIdentity() { return [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]; }
+function mat4CreatePerspective(fov, aspect, near, far) {
+  const f = 1.0 / Math.tan(fov / 2);
+  const rangeInv = 1 / (near - far);
+  return [f/aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (near+far)*rangeInv, -1, 0, 0, near*far*rangeInv*2, 0];
+}
+function mat4Translate(out, a, v) {
+  out[12] = a[0]*a[12] + a[1]*a[16] + a[2]*a[20] + a[3]*a[24] + v[0];
+  out[13] = a[0]*a[13] + a[1]*a[17] + a[2]*a[21] + a[3]*a[25] + v[1];
+  out[14] = a[0]*a[14] + a[1]*a[18] + a[2]*a[22] + a[3]*a[26] + v[2];
+}
+function mat4Rotate(out, a, rad, axis) {
+  let x = axis[0], y = axis[1], z = axis[2], len = Math.hypot(x, y, z);
+  if (len < 0.00001) return;
+  x /= len; y /= len; z /= len;
+  let s = Math.sin(rad), c = Math.cos(rad), t = 1 - c;
+  let b00 = a[0], b01 = a[1], b02 = a[2], b03 = a[3];
+  let b10 = a[4], b11 = a[5], b12 = a[6], b13 = a[7];
+  let b20 = a[8], b21 = a[9], b22 = a[10], b23 = a[11];
+  let p00 = x*x*t + c, p01 = y*x*t + z*s, p02 = z*x*t - y*s;
+  let p10 = x*y*t - z*s, p11 = y*y*t + c, p12 = z*y*t + x*s;
+  let p20 = x*z*t + y*s, p21 = y*z*t - x*s, p22 = z*z*t + c;
+  out[0] = b00*p00 + b10*p01 + b20*p02; out[1] = b01*p00 + b11*p01 + b21*p02; out[2] = b02*p00 + b12*p01 + b22*p02; out[3] = b03*p00 + b13*p01 + b23*p02;
+  out[4] = b00*p10 + b10*p11 + b20*p12; out[5] = b01*p10 + b11*p11 + b21*p12; out[6] = b02*p10 + b12*p11 + b22*p12; out[7] = b03*p10 + b13*p11 + b23*p12;
+  out[8] = b00*p20 + b10*p21 + b20*p22; out[9] = b01*p20 + b11*p21 + b21*p22; out[10] = b02*p20 + b12*p21 + b22*p22; out[11] = b03*p20 + b13*p21 + b23*p22;
+}
+
+if (window.activeAnimation) cancelAnimationFrame(window.activeAnimation);
+requestAnimationFrame(drawScene);
+window.activeCleanup = () => { if (window.activeAnimation) cancelAnimationFrame(window.activeAnimation); };</textarea>
     </div>
   </div>
 
@@ -258,7 +435,7 @@
       }
     }
 
-    recreateCanvas('raw');
+    recreateCanvas('webgl');
     window.addEventListener('resize', () => {
       const engineType = document.getElementById('engine-select').value;
       recreateCanvas(engineType === 'webgl' ? 'webgl' : 'raw');
@@ -277,9 +454,7 @@
       toast.innerText = `⚠️ Error: ${message}`;
       toast.classList.add('show');
       if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 4000);
+      toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 4000);
     }
 
     let lastTime = performance.now();
@@ -301,7 +476,6 @@
       buttons: { a: false, b: false, x: false, y: false }
     };
 
-    // Joystick Logic
     const joyContainer = document.getElementById('joystick-container');
     const joyStick = document.getElementById('joystick-stick');
     let jCenter = { x: 0, y: 0 }, jRadius = 0;
@@ -314,10 +488,7 @@
       joyContainer.setPointerCapture(e.pointerId);
       moveStick(e);
     });
-
-    joyContainer.addEventListener('pointermove', (e) => {
-      if (window.Input.joystick.isActive) moveStick(e);
-    });
+    joyContainer.addEventListener('pointermove', (e) => { if (window.Input.joystick.isActive) moveStick(e); });
 
     function releaseStick(e) {
       window.Input.joystick.isActive = false;
@@ -327,7 +498,6 @@
       joyStick.style.transform = `translate(-50%, -50%)`;
       try { joyContainer.releasePointerCapture(e.pointerId); } catch(err) {}
     }
-
     joyContainer.addEventListener('pointerup', releaseStick);
     joyContainer.addEventListener('pointercancel', releaseStick);
 
@@ -345,7 +515,6 @@
       window.Input.joystick.distance = dist / jRadius;
     }
 
-    // Action Buttons Logic (A, B, X, Y)
     document.querySelectorAll('.gp-btn').forEach(btn => {
       const key = btn.getAttribute('data-key');
       btn.addEventListener('pointerdown', (e) => {
@@ -363,7 +532,6 @@
       btn.addEventListener('pointercancel', releaseBtn);
     });
 
-    // Settings Controls
     document.getElementById('joy-opacity').addEventListener('input', (e) => {
       const val = e.target.value;
       joyContainer.style.opacity = val;
@@ -386,7 +554,6 @@
         mainWindow.classList.remove('active');
         const engineType = document.getElementById('engine-select').value;
         recreateCanvas(engineType);
-
         const userFunc = new Function('canvas', 'ctx', 'Input', `"use strict";\n${editor.value}`);
         userFunc(canvas, ctx, window.Input);
       } catch (err) {
@@ -408,6 +575,11 @@
       if (window.activeCleanup) window.activeCleanup();
       if (ctx && ctx.clearRect) ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
+
+    // Auto-boot WebGL script on load
+    window.addEventListener('load', () => {
+      setTimeout(() => { document.getElementById('btn-run').click(); }, 150);
+    });
   </script>
 </body>
 </html>
