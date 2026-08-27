@@ -1,585 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>SODIUM</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SODIUM">
-  <meta name="theme-color" content="#000000">
-
-  <style>
-    :root {
-      --neon-glow: 0 0 4px #ffffff, 0 0 10px rgba(255, 255, 255, 0.4);
-      --glass-bg: rgba(6, 6, 6, 0.97);
-      --glass-border: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body {
-      margin: 0; padding: 0; width: 100vw; height: 100vh;
-      background-color: #000000; color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
-      overflow: hidden; touch-action: none;
-    }
-
-    #canvas-container {
-      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
-      display: block; pointer-events: auto;
-    }
-    canvas { width: 100vw !important; height: 100vh !important; display: block; }
-
-    #top-floating-pill {
-      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-      background: rgba(12, 12, 12, 0.9);
-      border: var(--glass-border);
-      padding: 6px 18px; border-radius: 18px; z-index: 99999;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.9);
-      touch-action: manipulation;
-    }
-    #top-floating-pill .brand-text {
-      font-family: serif; font-weight: 700; font-style: italic; font-size: 0.85rem;
-      letter-spacing: 1.5px; text-shadow: var(--neon-glow); color: #fff;
-    }
-    #top-floating-pill:active { transform: translateX(-50%) scale(0.94); }
-
-    #main-window {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.95);
-      width: 92vw; max-width: 440px;
-      height: 88vh; max-height: 680px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-      border: var(--glass-border);
-      border-radius: 16px; z-index: 100000;
-      display: flex; flex-direction: column;
-      opacity: 0; pointer-events: none; transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 25px 60px rgba(0,0,0,0.98);
-    }
-    #main-window.active {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1; pointer-events: auto;
-    }
-
-    .window-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .window-title {
-      font-family: serif; font-weight: 700; font-style: italic; font-size: 1rem;
-      letter-spacing: 1.2px; text-shadow: var(--neon-glow); color: #fff;
-    }
-    .close-btn { 
-      background: none; border: none; color: #777; font-size: 24px; 
-      cursor: pointer; padding: 0 4px; line-height: 1;
-    }
-    .close-btn:active { color: #fff; }
-
-    .window-content {
-      flex: 1; display: flex; flex-direction: column;
-      padding: 16px; gap: 12px; overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .setting-group-title {
-      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
-      color: #666; margin-top: 2px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 2px;
-    }
-
-    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #bbb; }
-    .setting-row select, .setting-row input[type="range"] {
-      background: #121212; color: #fff; border: 1px solid #2a2a2a; padding: 6px 10px; border-radius: 6px; outline: none; font-size: 12px;
-    }
-    .setting-row input[type="range"] { width: 110px; cursor: pointer; }
-
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; transition: opacity 0.2s; }
-    .action-grid.hidden { display: none; }
-    .btn {
-      background: #161616; border: 1px solid #2a2a2a; color: #fff; padding: 10px;
-      border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
-      touch-action: manipulation;
-    }
-    .btn:active { background: #222; transform: scale(0.97); }
-    .btn.run { background: #0a2014; border-color: #123820; color: #2ecc71; }
-    .btn.clear { background: #260d0d; border-color: #4a1515; color: #e74c3c; }
-
-    #code-editor {
-      flex: 1; min-height: 100px; background: #020202; color: #00ffcc;
-      border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
-      padding: 12px; font-family: monospace; font-size: 12px; resize: none; outline: none;
-      touch-action: auto; -webkit-user-select: text; user-select: text;
-    }
-
-    #telemetry { font-family: monospace; color: #555; font-size: 10px; text-align: center; }
-
-    #notification-toast {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-      background: rgba(20, 5, 5, 0.95); border: 1px solid rgba(231, 76, 60, 0.4);
-      color: #ff6b6b; padding: 10px 20px; border-radius: 8px; font-size: 12px;
-      font-family: monospace; z-index: 200000; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      opacity: 0; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
-      pointer-events: none; text-align: center; max-width: 90vw;
-    }
-    #notification-toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    #joystick-container {
-      position: absolute; bottom: 30px; left: 30px;
-      width: 120px; height: 120px; z-index: 20;
-      opacity: 0.6; transition: opacity 0.2s; touch-action: none; display: block;
-    }
-    #joystick-base {
-      width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.25);
-      border-radius: 50%; position: relative; background: rgba(255,255,255,0.01);
-    }
-    #joystick-stick {
-      width: 44px; height: 44px; background: #ffffff; border-radius: 50%; position: absolute;
-      top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
-      box-shadow: var(--neon-glow);
-    }
-
-    #gamepad-container {
-      position: absolute; bottom: 30px; right: 30px;
-      width: 130px; height: 130px; z-index: 20;
-      opacity: 0.6; transition: opacity 0.2s; touch-action: none; display: block;
-    }
-    .gp-btn {
-      position: absolute; width: 44px; height: 44px; background: rgba(20,20,20,0.85);
-      border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; color: #fff;
-      font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center;
-      box-shadow: var(--neon-glow); user-select: none;
-    }
-    .gp-btn:active, .gp-btn.pressed { background: rgba(255,255,255,0.3); transform: scale(0.92); }
-    #btn-y { top: 0; left: 43px; }
-    #btn-x { top: 43px; left: 0; }
-    #btn-a { top: 43px; right: 0; }
-    #btn-b { bottom: 0; left: 43px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aakai Service - Premium Masala & Flour Products</title>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">Aakai Service</div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
 
-  <div id="canvas-container"></div>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Aakai Service</h1>
+            <p class="tagline">Pure Ingredients. Authentic Taste. Everyday Freshness.</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="document.getElementById('products').scrollIntoView()">Shop Now</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('products').scrollIntoView()">Explore Products</button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="image-placeholder">🌶 Masala & Flour</div>
+        </div>
+    </section>
 
-  <div id="top-floating-pill" role="button" aria-label="Open Sodium Menu">
-    <span class="brand-text">SODIUM</span>
-  </div>
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <h2>About Aakai Service</h2>
+            <p>Aakai Service is a trusted food products business dedicated to delivering premium quality Masala and Flour products. We believe in bringing authentic taste, freshness, and hygiene to every home. Our commitment to quality ingredients and customer satisfaction has made us a preferred choice for families across the region.</p>
+            
+            <div class="why-choose">
+                <h3>Why Choose Aakai Service?</h3>
+                <div class="features-grid">
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <h4>Quality Ingredients</h4>
+                        <p>Sourced from trusted suppliers</p>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <h4>Fresh Products</h4>
+                        <p>Processed with care</p>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <h4>Hygienic Processing</h4>
+                        <p>Strict quality control</p>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <h4>Quality Packaging</h4>
+                        <p>Preserves freshness</p>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <h4>Affordable Prices</h4>
+                        <p>Best value for money</p>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <h4>Customer Satisfaction</h4>
+                        <p>Your trust, our priority</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <div id="notification-toast"></div>
+    <!-- Process Section -->
+    <section class="process">
+        <div class="container">
+            <h2>Our Process</h2>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <p>Quality Ingredients</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <p>Processing</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <p>Hygienic Packing</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <p>Delivery</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <div id="joystick-container">
-    <div id="joystick-base"><div id="joystick-stick"></div></div>
-  </div>
+    <!-- Products Section -->
+    <section id="products" class="products">
+        <div class="container">
+            <h2>Our Products</h2>
+            
+            <!-- Masala Products -->
+            <div class="product-category">
+                <h3>🌶 Masala</h3>
+                <div class="products-grid">
+                    <div class="product-card">
+                        <div class="product-image">🌶</div>
+                        <h4>Garam Masala</h4>
+                        <p>Premium blend of aromatic spices</p>
+                        <p class="size">Available: 100g, 500g</p>
+                        <p class="price">₹150 - ₹650</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🌶</div>
+                        <h4>Chaat Masala</h4>
+                        <p>Tangy and flavorful spice mix</p>
+                        <p class="size">Available: 100g, 500g</p>
+                        <p class="price">₹120 - ₹550</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🌶</div>
+                        <h4>Sambar Powder</h4>
+                        <p>Authentic South Indian blend</p>
+                        <p class="size">Available: 100g, 500g</p>
+                        <p class="price">₹140 - ₹630</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🌶</div>
+                        <h4>Rasam Powder</h4>
+                        <p>Spicy and aromatic powder</p>
+                        <p class="size">Available: 100g, 500g</p>
+                        <p class="price">₹130 - ₹600</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
 
-  <div id="gamepad-container">
-    <div class="gp-btn" id="btn-y" data-key="y">Y</div>
-    <div class="gp-btn" id="btn-x" data-key="x">X</div>
-    <div class="gp-btn" id="btn-a" data-key="a">A</div>
-    <div class="gp-btn" id="btn-b" data-key="b">B</div>
-  </div>
+            <!-- Flour Products -->
+            <div class="product-category">
+                <h3>🌾 Flour</h3>
+                <div class="products-grid">
+                    <div class="product-card">
+                        <div class="product-image">🌾</div>
+                        <h4>Wheat Flour</h4>
+                        <p>Premium whole wheat flour</p>
+                        <p class="size">Available: 1kg, 5kg, 10kg</p>
+                        <p class="price">₹50 - ₹200</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🌾</div>
+                        <h4>Rice Flour</h4>
+                        <p>Fine and smooth rice flour</p>
+                        <p class="size">Available: 1kg, 5kg, 10kg</p>
+                        <p class="price">₹60 - ₹240</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🌾</div>
+                        <h4>Chickpea Flour</h4>
+                        <p>Pure gram flour (besan)</p>
+                        <p class="size">Available: 500g, 1kg, 5kg</p>
+                        <p class="price">₹80 - ₹320</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                    <div class="product-card">
+                        <div class="product-image">🌾</div>
+                        <h4>Millet Flour</h4>
+                        <p>Nutritious millet flour blend</p>
+                        <p class="size">Available: 1kg, 5kg, 10kg</p>
+                        <p class="price">₹70 - ₹280</p>
+                        <button class="btn btn-small">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <div id="main-window">
-    <div class="window-header">
-      <div class="window-title">SODIUM</div>
-      <button class="close-btn" id="btn-close" aria-label="Close Settings">×</button>
-    </div>
-    
-    <div class="window-content">
-      <div id="telemetry">60 FPS | 4K Native Ultra-Sharp Mode</div>
+    <!-- Ordering Section -->
+    <section class="ordering">
+        <div class="container">
+            <h2>Easy Ordering</h2>
+            <div class="order-methods">
+                <div class="order-method">
+                    <h4>🛒 Online Order</h4>
+                    <p>Add to cart and checkout</p>
+                    <button class="btn btn-small">Order Now</button>
+                </div>
+                <div class="order-method">
+                    <h4>💬 WhatsApp Order</h4>
+                    <p>Quick messaging service</p>
+                    <a href="https://wa.me/919876543210" class="btn btn-small" target="_blank">WhatsApp</a>
+                </div>
+                <div class="order-method">
+                    <h4>📞 Bulk Orders</h4>
+                    <p>Special discounts available</p>
+                    <button class="btn btn-small">Contact Us</button>
+                </div>
+            </div>
+        </div>
+    </section>
 
-      <div class="setting-group-title">Engine Suite</div>
-      <div class="setting-row">
-        <span>Active Pipeline</span>
-        <select id="engine-select">
-          <option value="raw">Raw Canvas [2D Context]</option>
-          <option value="webgl" selected>WebGL [OpenGL ES GPU Context]</option>
-          <option value="pixi">PixiJS 2D [Sprites & Particles]</option>
-          <option value="matter">Matter.js [2D Physics World]</option>
-          <option value="three">Three.js 3D [Pipelines & PBR]</option>
-        </select>
-      </div>
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <h4>📞 Phone</h4>
+                    <p>+91-9876-543-210</p>
+                </div>
+                <div class="contact-item">
+                    <h4>💬 WhatsApp</h4>
+                    <p><a href="https://wa.me/919876543210" target="_blank">+91-9876-543-210</a></p>
+                </div>
+                <div class="contact-item">
+                    <h4>📧 Email</h4>
+                    <p><a href="mailto:info@aakaiservice.com">info@aakaiservice.com</a></p>
+                </div>
+                <div class="contact-item">
+                    <h4>📍 Address</h4>
+                    <p>123 Spice Street, Food Market<br>Chennai, Tamil Nadu - 600001</p>
+                </div>
+            </div>
+            <div class="social-links">
+                <a href="#" target="_blank">Facebook</a>
+                <a href="#" target="_blank">Instagram</a>
+                <a href="#" target="_blank">Twitter</a>
+            </div>
+        </div>
+    </section>
 
-      <div class="setting-group-title">Interface & Controls</div>
-      <div class="setting-row">
-        <span>Joystick & Buttons Visibility</span>
-        <input type="checkbox" id="toggle-joystick" checked>
-      </div>
-      <div class="setting-row">
-        <span>Controls Opacity</span>
-        <input type="range" id="joy-opacity" min="0.1" max="1" step="0.1" value="0.6">
-      </div>
-      <div class="setting-row">
-        <span>Show Workspace Buttons</span>
-        <input type="checkbox" id="toggle-buttons" checked>
-      </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h5>Aakai Service</h5>
+                    <p>Bringing quality and authentic taste to every home.</p>
+                </div>
+                <div class="footer-section">
+                    <h5>Quick Links</h5>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#products">Products</a></li>
+                        <li><a href="#contact">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h5>Legal</h5>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Aakai Service. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
-      <div class="setting-group-title">Script Workspace</div>
-      <div class="action-grid" id="action-grid-container">
-        <button class="btn run" id="btn-run">▶ Run</button>
-        <button class="btn" id="btn-stop">⏹ Stop</button>
-        <button class="btn clear" id="btn-clear">🗑 Clear</button>
-      </div>
-
-      <textarea id="code-editor" spellcheck="false">// SODIUM 100% Guaranteed WebGL 3D Game Engine
-const gl = ctx;
-if (!gl || typeof gl.createShader !== 'function') {
-  throw new Error("WebGL context not active! Please select 'WebGL' in the engine dropdown.");
-}
-
-const vsSource = `
-  attribute vec4 aVertexPosition;
-  attribute vec4 aVertexColor;
-  uniform mat4 uModelViewMatrix;
-  uniform mat4 uProjectionMatrix;
-  uniform float uPulse;
-  varying vec4 vColor;
-  void main(void) {
-    vec4 scaledPos = aVertexPosition * (1.0 + uPulse * 0.2);
-    gl_Position = uProjectionMatrix * uModelViewMatrix * scaledPos;
-    vColor = aVertexColor;
-  }
-`;
-
-const fsSource = `
-  precision mediump float;
-  varying vec4 vColor;
-  uniform vec3 uColorTint;
-  void main(void) {
-    gl_FragColor = vec4(vColor.rgb * uColorTint, vColor.a);
-  }
-`;
-
-function loadShader(gl, type, source) {
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    const info = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    throw new Error('Shader compile error: ' + info);
-  }
-  return shader;
-}
-
-const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-const shaderProgram = gl.createProgram();
-gl.attachShader(shaderProgram, vertexShader);
-gl.attachShader(shaderProgram, fragmentShader);
-gl.linkProgram(shaderProgram);
-
-const programInfo = {
-  program: shaderProgram,
-  attribLocations: {
-    vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-    vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
-  },
-  uniformLocations: {
-    projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-    modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-    uPulse: gl.getUniformLocation(shaderProgram, 'uPulse'),
-    uColorTint: gl.getUniformLocation(shaderProgram, 'uColorTint'),
-  },
-};
-
-const positions = [
-  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
-  -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,   1.0,  1.0, -1.0,   1.0, -1.0, -1.0,
-  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
-  -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0, -1.0,  1.0,  -1.0, -1.0,  1.0,
-   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0,
-  -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,  -1.0,  1.0,  1.0,  -1.0,  1.0, -1.0,
-];
-
-const faceColors = [
-  [0.0, 1.0, 0.8, 1.0], [1.0, 1.0, 1.0, 1.0], [0.0, 0.6, 1.0, 1.0],
-  [0.2, 0.2, 0.2, 1.0], [0.0, 1.0, 0.4, 1.0], [0.8, 0.0, 1.0, 1.0],
-];
-
-let colors = [];
-for (let i = 0; i < faceColors.length; ++i) {
-  for (let j = 0; j < 4; j++) colors = colors.concat(faceColors[i]);
-}
-
-const indices = [
-  0,  1,  2,    0,  2,  3,    4,  5,  6,    4,  6,  7,
-  8,  9,  10,   8,  10, 11,   12, 13, 14,   12, 14, 15,
-  16, 17, 18,   16, 18, 19,   20, 21, 22,   20, 22, 23
-];
-
-const positionBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-const colorBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-
-const indexBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-
-let cubeRotation = 0.0, rotX = 0.0, rotY = 0.0, pulseVal = 0.0;
-
-function drawScene() {
-  gl.viewport(0, 0, canvas.width, canvas.height);
-
-  if (Input.joystick.isActive) {
-    rotX += Input.joystick.y * 0.05;
-    rotY += Input.joystick.x * 0.05;
-  } else {
-    cubeRotation += 0.015;
-  }
-
-  let colorTint = [1.0, 1.0, 1.0];
-  if (Input.buttons.a) colorTint = [0.0, 1.0, 0.5];
-  if (Input.buttons.b) colorTint = [1.0, 0.2, 0.2];
-  if (Input.buttons.x) pulseVal = Math.sin(performance.now() * 0.01);
-  else pulseVal = 0.0;
-
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-  gl.clearDepth(1.0);
-  gl.enable(gl.DEPTH_TEST);
-  gl.depthFunc(gl.LEQUAL);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  const fieldOfView = 45 * Math.PI / 180;
-  const aspect = canvas.width / canvas.height;
-  const projectionMatrix = mat4CreatePerspective(fieldOfView, aspect, 0.1, 100.0);
-
-  const modelViewMatrix = mat4CreateIdentity();
-  mat4Translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, Input.buttons.y ? -4.0 : -6.0]);
-  mat4Rotate(modelViewMatrix, modelViewMatrix, cubeRotation + rotY, [0, 1, 0]);
-  mat4Rotate(modelViewMatrix, modelViewMatrix, 0.7 + rotX, [1, 0, 0]);
-
-  gl.useProgram(shaderProgram);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.vertexAttribPointer(programInfo.attribLocations.vertexColor, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
-
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
-  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-  gl.uniform1f(programInfo.uniformLocations.uPulse, pulseVal);
-  gl.uniform3fv(programInfo.uniformLocations.uColorTint, colorTint);
-
-  gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
-  window.activeAnimation = requestAnimationFrame(drawScene);
-}
-
-function mat4CreateIdentity() { return [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]; }
-function mat4CreatePerspective(fov, aspect, near, far) {
-  const f = 1.0 / Math.tan(fov / 2);
-  const rangeInv = 1 / (near - far);
-  return [f/aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (near+far)*rangeInv, -1, 0, 0, near*far*rangeInv*2, 0];
-}
-function mat4Translate(out, a, v) {
-  out[12] = a[0]*a[12] + a[1]*a[16] + a[2]*a[20] + a[3]*a[24] + v[0];
-  out[13] = a[0]*a[13] + a[1]*a[17] + a[2]*a[21] + a[3]*a[25] + v[1];
-  out[14] = a[0]*a[14] + a[1]*a[18] + a[2]*a[22] + a[3]*a[26] + v[2];
-}
-function mat4Rotate(out, a, rad, axis) {
-  let x = axis[0], y = axis[1], z = axis[2], len = Math.hypot(x, y, z);
-  if (len < 0.00001) return;
-  x /= len; y /= len; z /= len;
-  let s = Math.sin(rad), c = Math.cos(rad), t = 1 - c;
-  let b00 = a[0], b01 = a[1], b02 = a[2], b03 = a[3];
-  let b10 = a[4], b11 = a[5], b12 = a[6], b13 = a[7];
-  let b20 = a[8], b21 = a[9], b22 = a[10], b23 = a[11];
-  let p00 = x*x*t + c, p01 = y*x*t + z*s, p02 = z*x*t - y*s;
-  let p10 = x*y*t - z*s, p11 = y*y*t + c, p12 = z*y*t + x*s;
-  let p20 = x*z*t + y*s, p21 = y*z*t - x*s, p22 = z*z*t + c;
-  out[0] = b00*p00 + b10*p01 + b20*p02; out[1] = b01*p00 + b11*p01 + b21*p02; out[2] = b02*p00 + b12*p01 + b22*p02; out[3] = b03*p00 + b13*p01 + b23*p02;
-  out[4] = b00*p10 + b10*p11 + b20*p12; out[5] = b01*p10 + b11*p11 + b21*p12; out[6] = b02*p10 + b12*p11 + b22*p12; out[7] = b03*p10 + b13*p11 + b23*p12;
-  out[8] = b00*p20 + b10*p21 + b20*p22; out[9] = b01*p20 + b11*p21 + b21*p22; out[10] = b02*p20 + b12*p21 + b22*p22; out[11] = b03*p20 + b13*p21 + b23*p22;
-}
-
-if (window.activeAnimation) cancelAnimationFrame(window.activeAnimation);
-requestAnimationFrame(drawScene);
-window.activeCleanup = () => { if (window.activeAnimation) cancelAnimationFrame(window.activeAnimation); };</textarea>
-    </div>
-  </div>
-
-  <script>
-    const container = document.getElementById('canvas-container');
-    let canvas = document.createElement('canvas');
-    let ctx = null;
-
-    function recreateCanvas(contextType) {
-      if (window.activeCleanup) window.activeCleanup();
-      container.innerHTML = '';
-      canvas = document.createElement('canvas');
-      container.appendChild(canvas);
-
-      const dpr = Math.max(window.devicePixelRatio || 1, 2);
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-
-      if (contextType === 'webgl') {
-        ctx = canvas.getContext('webgl2', { alpha: false, antialias: true }) || canvas.getContext('webgl', { alpha: false, antialias: true });
-        if (!ctx) throw new Error("WebGL context creation failed on this device.");
-      } else {
-        ctx = canvas.getContext('2d');
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(dpr, dpr);
-      }
-    }
-
-    recreateCanvas('webgl');
-    window.addEventListener('resize', () => {
-      const engineType = document.getElementById('engine-select').value;
-      recreateCanvas(engineType === 'webgl' ? 'webgl' : 'raw');
-    });
-
-    const topPill = document.getElementById('top-floating-pill');
-    const mainWindow = document.getElementById('main-window');
-    const btnClose = document.getElementById('btn-close');
-
-    topPill.addEventListener('pointerdown', (e) => { e.preventDefault(); mainWindow.classList.add('active'); });
-    btnClose.addEventListener('pointerdown', (e) => { e.preventDefault(); mainWindow.classList.remove('active'); });
-
-    const toast = document.getElementById('notification-toast');
-    let toastTimer = null;
-    function notifyError(message) {
-      toast.innerText = `⚠️ Error: ${message}`;
-      toast.classList.add('show');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 4000);
-    }
-
-    let lastTime = performance.now();
-    let frames = 0;
-    const fpsDisplay = document.getElementById('telemetry');
-    function loop() {
-      const now = performance.now();
-      frames++;
-      if (now - lastTime >= 1000) {
-        fpsDisplay.innerText = `${frames} FPS | 4K Native Ultra-Sharp Mode`;
-        frames = 0; lastTime = now;
-      }
-      requestAnimationFrame(loop);
-    }
-    loop();
-
-    window.Input = {
-      joystick: { x: 0, y: 0, angle: 0, distance: 0, isActive: false },
-      buttons: { a: false, b: false, x: false, y: false }
-    };
-
-    const joyContainer = document.getElementById('joystick-container');
-    const joyStick = document.getElementById('joystick-stick');
-    let jCenter = { x: 0, y: 0 }, jRadius = 0;
-
-    joyContainer.addEventListener('pointerdown', (e) => {
-      window.Input.joystick.isActive = true;
-      const rect = joyContainer.getBoundingClientRect();
-      jCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      jRadius = rect.width / 2;
-      joyContainer.setPointerCapture(e.pointerId);
-      moveStick(e);
-    });
-    joyContainer.addEventListener('pointermove', (e) => { if (window.Input.joystick.isActive) moveStick(e); });
-
-    function releaseStick(e) {
-      window.Input.joystick.isActive = false;
-      window.Input.joystick.x = 0;
-      window.Input.joystick.y = 0;
-      window.Input.joystick.distance = 0;
-      joyStick.style.transform = `translate(-50%, -50%)`;
-      try { joyContainer.releasePointerCapture(e.pointerId); } catch(err) {}
-    }
-    joyContainer.addEventListener('pointerup', releaseStick);
-    joyContainer.addEventListener('pointercancel', releaseStick);
-
-    function moveStick(e) {
-      const dx = e.clientX - jCenter.x;
-      const dy = e.clientY - jCenter.y;
-      const dist = Math.min(Math.sqrt(dx * dx + dy * dy), jRadius);
-      const angle = Math.atan2(dy, dx);
-      const sx = Math.cos(angle) * dist;
-      const sy = Math.sin(angle) * dist;
-      joyStick.style.transform = `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px))`;
-      window.Input.joystick.x = sx / jRadius;
-      window.Input.joystick.y = sy / jRadius;
-      window.Input.joystick.angle = angle;
-      window.Input.joystick.distance = dist / jRadius;
-    }
-
-    document.querySelectorAll('.gp-btn').forEach(btn => {
-      const key = btn.getAttribute('data-key');
-      btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        window.Input.buttons[key] = true;
-        btn.classList.add('pressed');
-        btn.setPointerCapture(e.pointerId);
-      });
-      const releaseBtn = (e) => {
-        window.Input.buttons[key] = false;
-        btn.classList.remove('pressed');
-        try { btn.releasePointerCapture(e.pointerId); } catch(err) {}
-      };
-      btn.addEventListener('pointerup', releaseBtn);
-      btn.addEventListener('pointercancel', releaseBtn);
-    });
-
-    document.getElementById('joy-opacity').addEventListener('input', (e) => {
-      const val = e.target.value;
-      joyContainer.style.opacity = val;
-      document.getElementById('gamepad-container').style.opacity = val;
-    });
-    document.getElementById('toggle-joystick').addEventListener('change', (e) => {
-      const display = e.target.checked ? 'block' : 'none';
-      joyContainer.style.display = display;
-      document.getElementById('gamepad-container').style.display = display;
-    });
-    document.getElementById('toggle-buttons').addEventListener('change', (e) => {
-      const grid = document.getElementById('action-grid-container');
-      if (e.target.checked) grid.classList.remove('hidden');
-      else grid.classList.add('hidden');
-    });
-
-    const editor = document.getElementById('code-editor');
-    document.getElementById('btn-run').onclick = () => {
-      try {
-        mainWindow.classList.remove('active');
-        const engineType = document.getElementById('engine-select').value;
-        recreateCanvas(engineType);
-        const userFunc = new Function('canvas', 'ctx', 'Input', `"use strict";\n${editor.value}`);
-        userFunc(canvas, ctx, window.Input);
-      } catch (err) {
-        notifyError(err.message);
-      }
-    };
-
-    document.getElementById('btn-stop').onclick = () => {
-      if (window.activeCleanup) window.activeCleanup();
-      if (ctx && ctx.clearRect) ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (ctx && ctx.clear) {
-        ctx.clearColor(0,0,0,1);
-        ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
-      }
-    };
-
-    document.getElementById('btn-clear').onclick = () => {
-      editor.value = '';
-      if (window.activeCleanup) window.activeCleanup();
-      if (ctx && ctx.clearRect) ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
-
-    // Auto-boot WebGL script on load
-    window.addEventListener('load', () => {
-      setTimeout(() => { document.getElementById('btn-run').click(); }, 150);
-    });
-  </script>
+    <script src="assets/js/script.js"></script>
 </body>
 </html>
