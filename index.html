@@ -3,12 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</title>
+  <title>SODIUM</title>
+
+  <!-- Home Screen App Settings & Native Web App Manifest Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SODIUM">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Sodium Home Screen App Icon with Subdued Neon Glow -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000000'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-style='italic' font-size='110' fill='%23ffffff' style='text-shadow: 0 0 8px %23ffffff, 0 0 16px %23ffffff;'>SODIUM</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000000'/><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-weight='bold' font-style='italic' font-size='110' fill='%23ffffff' style='text-shadow: 0 0 8px %23ffffff, 0 0 16px %23ffffff;'>SODIUM</text></svg>">
+
   <style>
     :root {
-      --neon-bloom: 0 0 6px #ffffff, 0 0 15px #ffffff, 0 0 30px #ffffff;
-      --glass-bg: rgba(8, 8, 8, 0.95);
-      --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+      --neon-glow: 0 0 4px #ffffff, 0 0 10px rgba(255, 255, 255, 0.4);
+      --glass-bg: rgba(8, 8, 8, 0.96);
+      --glass-border: 1px solid rgba(255, 255, 255, 0.12);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -25,12 +36,12 @@
       pointer-events: auto;
     }
 
-    /* Small Floating Brand Header on Top */
+    /* Top Floating Brand Header with Subtle Neon Glow */
     #top-floating-pill {
       position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-      background: rgba(15, 15, 15, 0.88);
+      background: rgba(12, 12, 12, 0.9);
       border: var(--glass-border);
-      padding: 5px 14px; border-radius: 16px; z-index: 99999;
+      padding: 5px 16px; border-radius: 16px; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       box-shadow: 0 4px 15px rgba(0,0,0,0.9);
@@ -38,7 +49,7 @@
     }
     #top-floating-pill .brand-text {
       font-family: serif; font-weight: 700; font-style: italic; font-size: 0.85rem;
-      letter-spacing: 1.2px; text-shadow: var(--neon-bloom); color: #fff;
+      letter-spacing: 1.5px; text-shadow: var(--neon-glow); color: #fff;
     }
     #top-floating-pill:active { transform: translateX(-50%) scale(0.94); }
 
@@ -63,14 +74,14 @@
 
     .window-header {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .window-title {
       font-family: serif; font-weight: 700; font-style: italic; font-size: 1rem;
-      letter-spacing: 1px; text-shadow: var(--neon-bloom); color: #fff;
+      letter-spacing: 1.2px; text-shadow: var(--neon-glow); color: #fff;
     }
     .close-btn { 
-      background: none; border: none; color: #888; font-size: 22px; 
+      background: none; border: none; color: #777; font-size: 22px; 
       cursor: pointer; padding: 0 4px; line-height: 1;
     }
     .close-btn:active { color: #fff; }
@@ -83,48 +94,48 @@
 
     .setting-group-title {
       font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
-      color: #777; margin-top: 2px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px;
+      color: #666; margin-top: 2px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 2px;
     }
 
-    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #ccc; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #bbb; }
     .setting-row select, .setting-row input[type="range"] {
-      background: #141414; color: #fff; border: 1px solid #333; padding: 5px 8px; border-radius: 5px; outline: none; font-size: 12px;
+      background: #121212; color: #fff; border: 1px solid #2a2a2a; padding: 5px 8px; border-radius: 5px; outline: none; font-size: 12px;
     }
     .setting-row input[type="range"] { width: 100px; cursor: pointer; }
 
     .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .btn {
-      background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 9px;
+      background: #161616; border: 1px solid #2a2a2a; color: #fff; padding: 9px;
       border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center;
       touch-action: manipulation;
     }
-    .btn:active { background: #282828; transform: scale(0.97); }
-    .btn.run { background: #0c2417; border-color: #174226; color: #2ecc71; }
-    .btn.clear { background: #2d1010; border-color: #521c1c; color: #e74c3c; }
+    .btn:active { background: #222; transform: scale(0.97); }
+    .btn.run { background: #0a2014; border-color: #123820; color: #2ecc71; }
+    .btn.clear { background: #260d0d; border-color: #4a1515; color: #e74c3c; }
 
     #code-editor {
-      flex: 1; min-height: 110px; background: #030303; color: #00ffcc;
-      border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;
+      flex: 1; min-height: 110px; background: #020202; color: #00ffcc;
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 6px;
       padding: 10px; font-family: monospace; font-size: 12px; resize: none; outline: none;
       touch-action: auto; -webkit-user-select: text; user-select: text;
     }
 
     #telemetry { font-family: monospace; color: #555; font-size: 10px; text-align: center; }
 
-    /* Highly Optimized Mobile Touch Joystick */
+    /* Optimized Mobile Touch Joystick with Subtle Glow */
     #joystick-container {
       position: absolute; bottom: 24px; left: 24px;
       width: 110px; height: 110px; z-index: 20;
       opacity: 0.6; transition: opacity 0.2s; touch-action: none; display: block;
     }
     #joystick-base {
-      width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 50%; position: relative; background: rgba(255,255,255,0.02);
+      width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 50%; position: relative; background: rgba(255,255,255,0.01);
     }
     #joystick-stick {
       width: 40px; height: 40px; background: #ffffff; border-radius: 50%; position: absolute;
       top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
-      box-shadow: var(--neon-bloom);
+      box-shadow: var(--neon-glow);
     }
   </style>
 </head>
@@ -134,8 +145,8 @@
   <canvas id="render-canvas"></canvas>
 
   <!-- Top Floating Brand Header -->
-  <div id="top-floating-pill" role="button" aria-label="Open Executor Menu">
-    <span class="brand-text">𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</span>
+  <div id="top-floating-pill" role="button" aria-label="Open Sodium Menu">
+    <span class="brand-text">SODIUM</span>
   </div>
 
   <!-- Touch Joystick -->
@@ -146,7 +157,7 @@
   <!-- Central Control Window (All Settings, Engines, and Editor) -->
   <div id="main-window">
     <div class="window-header">
-      <div class="window-title">𝑬𝑿𝑬𝑪𝑼𝑻𝑶𝑹 𝑮𝑮</div>
+      <div class="window-title">SODIUM</div>
       <button class="close-btn" id="btn-close" aria-label="Close Settings">×</button>
     </div>
     
